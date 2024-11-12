@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    id ("com.google.gms.google-services") // Plugin cho Firebase
 }
 
 android {
@@ -32,12 +33,16 @@ android {
 }
 
 dependencies {
-
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+    implementation(libs.firebase.database)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+
+    implementation ("com.google.firebase:firebase-ml-vision:24.0.3")
+    implementation ("com.google.android.gms:play-services-mlkit-object-detection:17.0.0")
 }
