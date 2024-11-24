@@ -1,43 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="@color/light_gray">
 
-    <!-- TextView to show the result of object detection -->
-    <TextView
-        android:id="@+id/tvResult"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Chờ nhận diện vật thể..."
-        android:textSize="18sp"
-        android:textColor="#000000"
-        android:layout_marginBottom="20dp"/>
+    <!-- CardView để chứa TextView kết quả nhận diện -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="113dp"
+        android:layout_marginBottom="20dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp">
 
+        <TextView
+            android:id="@+id/tvResult"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#6200EE"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Kết quả sẽ hiển thị ở đây"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp" />
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- PreviewView cho camera -->
     <androidx.camera.view.PreviewView
         android:id="@+id/viewFinder"
         android:layout_width="match_parent"
-        android:layout_height="255dp" />
-    <!-- Button to start object detection -->
-    <Button
-        android:id="@+id/btnStartDetection"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Bắt đầu nhận diện"
-        android:textSize="16sp"
-        android:onClick="startDetection"
-        android:layout_marginBottom="20dp"/>
-
-    <!-- ImageView to show the object detected (optional) -->
-    <ImageView
-        android:id="@+id/imgDetectedObject"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:src="@drawable/ic_camera"
-        android:contentDescription="Image of detected object"
-        android:layout_marginBottom="20dp"/>
-
+        android:layout_height="510dp"
+        android:layout_marginBottom="20dp"
+        android:background="@color/black"
+        android:elevation="4dp" />
 
 </LinearLayout>

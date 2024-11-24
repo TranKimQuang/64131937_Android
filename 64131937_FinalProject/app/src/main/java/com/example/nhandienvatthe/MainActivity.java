@@ -1,168 +1,219 @@
 package com.example.nhandienvatthe;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
-import android.speech.tts.TextToSpeech.OnInitListener;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
-import android.widget.Button;
-import android.widget.Toast;
-import androidx.camera.view.PreviewView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ExperimentalGetImage;
 import androidx.camera.core.ImageAnalysis;
+import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
-import androidx.core.app.ActivityCompat;
+import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mlkit.vision.common.InputImage;
-import com.google.mlkit.vision.objects.DetectedObject;
-import com.google.mlkit.vision.objects.ObjectDetection;
-import com.google.mlkit.vision.objects.ObjectDetector;
-import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions;
-import android.util.Size;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int CAMERA_PERMISSION_REQUEST_CODE = 100;
-    private TextToSpeech textToSpeech;
+    private static final String TAG = "MainActivity";
+
+    private PreviewView previewView;
+    private TextView tvResult;
+
+    private ObjectDetectionHelper objectDetectionHelper;
     private ExecutorService cameraExecutor;
-    private Button btnStartDetection;  // Nút bắt đầu nhận diện
-    private PreviewView viewFinder;  // Preview camera feed
+    private ImageCapture imageCapture;
+    private TextToSpeech textToSpeech;
+    private boolean isSpeaking = false; // Biến kiểm soát trạng thái đọc
+    private String lastLabel = ""; // Biến lưu trữ nhãn cuối cùng đã được đọc
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Khởi tạo Text-to-Speech
-        textToSpeech = new TextToSpeech(this, new OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                if (status == TextToSpeech.SUCCESS) {
-                    int langResult = textToSpeech.setLanguage(Locale.getDefault());
-                    if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        Log.e("MainActivity", "Ngôn ngữ không được hỗ trợ hoặc thiếu dữ liệu");
-                    } else {
-                        Log.d("MainActivity", "Khởi tạo Text-to-Speech thành công");
-                    }
-                } else {
-                    Log.e("MainActivity", "Khởi tạo thất bại");
-                }
-            }
-        });
+        previewView = findViewById(R.id.viewFinder);
+        tvResult = findViewById(R.id.tvResult);
 
-        // Khởi tạo Camera Executor cho CameraX
         cameraExecutor = Executors.newSingleThreadExecutor();
+        setupCamera();
 
-        // Lấy tham chiếu đến nút bắt đầu nhận diện
-        btnStartDetection = findViewById(R.id.btnStartDetection);
-        viewFinder = findViewById(R.id.viewFinder);
+        objectDetectionHelper = new ObjectDetectionHelper();
 
-        // Thiết lập sự kiện click cho nút
-        btnStartDetection.setOnClickListener(view -> {
-            // Kiểm tra quyền sử dụng Camera trước khi bắt đầu nhận diện
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+        // Khởi tạo TextToSpeech
+        textToSpeech = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                textToSpeech.setLanguage(Locale.getDefault());
+                textToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                    @Override
+                    public void onStart(String utteranceId) {
+                        Log.d(TAG, "TextToSpeech started: " + utteranceId);
+                    }
+
+                    @Override
+                    public void onDone(String utteranceId) {
+                        synchronized (MainActivity.this) {
+                            isSpeaking = false; // Cập nhật trạng thái khi đọc xong
+                            Log.d(TAG, "TextToSpeech completed: " + utteranceId);
+                        }
+                    }
+
+                    @Override
+                    public void onError(String utteranceId) {
+                        synchronized (MainActivity.this) {
+                            isSpeaking = false; // Cập nhật trạng thái khi gặp lỗi
+                            Log.e(TAG, "TextToSpeech error: " + utteranceId);
+                        }
+                    }
+                });
             } else {
-                startObjectDetection();
+                Log.e(TAG, "TextToSpeech initialization failed");
             }
         });
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startObjectDetection();
-            } else {
-                Toast.makeText(this, "Cần cấp quyền sử dụng Camera", Toast.LENGTH_SHORT).show();
+    private void setupCamera() {
+        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+        cameraProviderFuture.addListener(() -> {
+            try {
+                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                bindCamera(cameraProvider);
+            } catch (Exception e) {
+                Log.e(TAG, "Camera setup error: ", e);
             }
+        }, ContextCompat.getMainExecutor(this));
+    }
+
+    private void bindCamera(ProcessCameraProvider cameraProvider) {
+        Preview preview = new Preview.Builder().build();
+        preview.setSurfaceProvider(previewView.getSurfaceProvider());
+
+        imageCapture = new ImageCapture.Builder().build();
+        ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build();
+        imageAnalysis.setAnalyzer(cameraExecutor, new ImageAnalysis.Analyzer() {
+            @OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
+            @Override
+            public void analyze(@NonNull ImageProxy imageProxy) {
+                @SuppressWarnings("UnsafeOptInUsageError")
+                ImageProxy.PlaneProxy[] planes = imageProxy.getPlanes();
+                if (planes.length > 0) {
+                    InputImage image = InputImage.fromMediaImage(imageProxy.getImage(), imageProxy.getImageInfo().getRotationDegrees());
+                    detectObjects(image, imageProxy);
+                }
+            }
+        });
+
+        cameraProvider.bindToLifecycle(
+                this,
+                CameraSelector.DEFAULT_BACK_CAMERA,
+                preview,
+                imageCapture,
+                imageAnalysis
+        );
+    }
+
+    private void detectObjects(InputImage image, ImageProxy imageProxy) {
+        objectDetectionHelper.detectObjects(image, new ObjectDetectionHelper.ObjectDetectionListener() {
+            @Override
+            public void onSuccess(List<MyDetectedObject> myDetectedObjects) {
+                runOnUiThread(() -> {
+                    updateDetectedObjects(myDetectedObjects);
+                    imageProxy.close(); // Đóng imageProxy sau khi xử lý
+                });
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Log.e(TAG, "Object detection failed: ", e);
+                runOnUiThread(() -> updateNoDetection());
+                imageProxy.close(); // Đóng imageProxy ngay cả khi xảy ra lỗi
+            }
+        });
+    }
+
+    private void updateNoDetection() {
+        String noDetectionText = "Không nhận diện được đối tượng nào.";
+        tvResult.setText(noDetectionText);
+        Log.d(TAG, noDetectionText);
+        isSpeaking = false; // Reset trạng thái khi không nhận diện được đối tượng nào
+        lastLabel = ""; // Reset nhãn cuối cùng
+    }
+
+    private void updateDetectedObjects(List<MyDetectedObject> detectedObjects) {
+        StringBuilder result = new StringBuilder();
+        if (detectedObjects == null || detectedObjects.isEmpty()) {
+            updateNoDetection();
+        } else {
+            for (MyDetectedObject myDetectedObject : detectedObjects) {
+                Rect boundingBox = myDetectedObject.getBoundingBox();
+                Integer confidence = myDetectedObject.getConfidence();
+                List<com.google.mlkit.vision.objects.DetectedObject.Label> labels = myDetectedObject.getLabels();
+
+                if (labels != null && !labels.isEmpty()) {
+                    for (com.google.mlkit.vision.objects.DetectedObject.Label label : labels) {
+                        String labelText = label.getText();
+                        if (labelText != null) { // Kiểm tra null trước khi thêm vào result
+                            switch (labelText) {
+                                case "Food":
+                                    labelText = "Thực phẩm";
+                                    break;
+                                case "Home good":
+                                    labelText = "Đồ gia dụng";
+                                    break;
+                                case "Fashion good":
+                                    labelText = "Đồ thời trang";
+                                    break;
+                                default:
+                                    labelText = "Vật thể lạ";
+                                    break;
+                            }
+                            result.append(labelText).append("\n");
+                            Log.d(TAG, "Detected object: " + labelText); // Ghi Log
+                            if (!isSpeaking && (!labelText.equals(lastLabel))) { // Chỉ đọc nếu nhãn khác với nhãn cuối cùng
+                                lastLabel = labelText;
+                                readTextAloud(labelText);
+                            }
+                        } else {
+                            Log.d(TAG, "Detected object label text is null.");
+                        }
+                    }
+                } else {
+                    result.append("Vật thể lạ\n"); // Thông báo khi không có nhãn nào được nhận diện
+                    Log.d(TAG, "No labels detected in the object.");
+                    if (!isSpeaking && (!"Vật thể lạ".equals(lastLabel))) {
+                        lastLabel = "Vật thể lạ";
+                        readTextAloud("Vật thể lạ");
+                    }
+                }
+            }
+            tvResult.setText(result.toString());
         }
     }
 
-    @OptIn(markerClass = ExperimentalGetImage.class)
-    private void startObjectDetection() {
-        // Cấu hình cho Object Detection
-        ObjectDetectorOptions options = new ObjectDetectorOptions.Builder()
-                .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)  // Chế độ stream
-                .enableMultipleObjects()  // Phát hiện nhiều đối tượng
-                .build();
-
-        ObjectDetector objectDetector = ObjectDetection.getClient(options);
-
-        // Khởi tạo CameraX để lấy ảnh
-        ProcessCameraProvider.getInstance(this).addListener(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    ProcessCameraProvider cameraProvider = ProcessCameraProvider.getInstance(MainActivity.this).get();
-
-                    // Chọn camera (lưng)
-                    CameraSelector cameraSelector = new CameraSelector.Builder()
-                            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-                            .build();
-
-                    // Thiết lập ImageAnalysis use case
-                    ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
-                            .setTargetResolution(new Size(1280, 720)) // Độ phân giải cho phân tích ảnh
-                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_BLOCK_PRODUCER) // Cấu hình backpressure
-                            .build();
-
-                    imageAnalysis.setAnalyzer(cameraExecutor, image -> {
-                        try {
-                            // Chuyển đổi ImageProxy thành InputImage
-                            InputImage inputImage = InputImage.fromMediaImage(image.getImage(), image.getImageInfo().getRotationDegrees());
-
-                            // Phát hiện đối tượng
-                            objectDetector.process(inputImage)
-                                    .addOnSuccessListener(detectedObjects -> {
-                                        for (DetectedObject detectedObject : detectedObjects) {
-                                            // Lấy nhãn của đối tượng
-                                            List<DetectedObject.Label> labels = detectedObject.getLabels();
-                                            StringBuilder objectDescription = new StringBuilder();
-                                            for (DetectedObject.Label label : labels) {
-                                                objectDescription.append(label.getText()).append(" ");
-                                            }
-
-                                            // Phát âm mô tả của đối tượng
-                                            speakOut(objectDescription.toString());
-                                        }
-                                    })
-                                    .addOnFailureListener(e -> Log.e("MainActivity", "Phát hiện đối tượng thất bại", e));
-                        } finally {
-                            image.close();
-                        }
-                    });
-
-                    // Liên kết camera và ImageAnalysis với lifecycle
-                    Preview preview = new Preview.Builder().build();
-                    preview.setSurfaceProvider(viewFinder.getSurfaceProvider());
-
-                    cameraProvider.bindToLifecycle(MainActivity.this, cameraSelector, preview, imageAnalysis);
-
-                } catch (ExecutionException | InterruptedException e) {
-                    Log.e("CameraX", "Khởi tạo camera thất bại", e);
-                }
-            }
-        }, ContextCompat.getMainExecutor(this));  // Sử dụng Executor của UI
-    }
-
-    private void speakOut(String text) {
-        if (textToSpeech != null && text != null && !text.isEmpty()) {
-            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
+    private synchronized void readTextAloud(String text) {
+        if (text != null && textToSpeech != null && !isSpeaking) { // Kiểm tra null và trạng thái đọc
+            Log.d(TAG, "Reading text aloud: " + text);
+            isSpeaking = true;
+            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts1");
+        } else {
+            Log.d(TAG, "Text or TextToSpeech is null or already speaking.");
         }
     }
 
@@ -173,5 +224,6 @@ public class MainActivity extends AppCompatActivity {
             textToSpeech.stop();
             textToSpeech.shutdown();
         }
+        cameraExecutor.shutdown();
     }
 }
