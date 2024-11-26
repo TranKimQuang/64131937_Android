@@ -1,4 +1,4 @@
-package com.example.nhandienvatthe;
+package com.ObjDetec.nhandienvatthe;
 
 public class DetectedObjectData {
     private String objectName;

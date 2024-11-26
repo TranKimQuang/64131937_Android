@@ -1,4 +1,4 @@
-package com.example.nhandienvatthe;
+package com.ObjDetec.nhandienvatthe;
 
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -11,7 +11,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
-import androidx.camera.core.ExperimentalGetImage;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageProxy;

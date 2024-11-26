@@ -1,4 +1,4 @@
-package com.example.nhandienvatthe;
+package com.ObjDetec.nhandienvatthe;
 
 import android.graphics.Rect;
 import com.google.mlkit.vision.objects.DetectedObject.Label;

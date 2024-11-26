@@ -1,4 +1,4 @@
-package com.example.nhandienvatthe;
+package com.ObjDetec.nhandienvatthe;
 
 import org.junit.Test;
 
