@@ -21,7 +21,6 @@ import androidx.core.content.ContextCompat;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mlkit.vision.common.InputImage;
-
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
