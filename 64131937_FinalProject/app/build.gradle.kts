@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.nhandienvatthe"
+    namespace = "com.ObjDetec.nhandienvatthe"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.nhandienvatthe"
+        applicationId = "com.ObjDetec.nhandienvatthe"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
