@@ -6,6 +6,17 @@
     tools:context=".MainActivity">
 
     <TextView
+        android:id="@+id/titleA"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="72dp"
+        android:text="A="
+        android:textAlignment="center"
+        android:textSize="24sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -18,14 +29,15 @@
 
     <EditText
         android:id="@+id/aNumber"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="365dp"
+        android:layout_height="58dp"
         android:hint="Nhập số A"
         android:inputType="number"
-        app:layout_constraintTop_toBottomOf="@id/title"
-        app:layout_constraintStart_toStartOf="parent"
+        android:padding="16dp"
         app:layout_constraintEnd_toEndOf="parent"
-        android:padding="16dp" />
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/titleA"
+        app:layout_constraintTop_toBottomOf="@id/title" />
 
     <EditText
         android:id="@+id/bNumber"
@@ -33,64 +45,90 @@
         android:layout_height="wrap_content"
         android:hint="Nhập số B"
         android:inputType="number"
-        app:layout_constraintTop_toBottomOf="@id/aNumber"
-        app:layout_constraintStart_toStartOf="parent"
+        android:padding="16dp"
         app:layout_constraintEnd_toEndOf="parent"
-        android:padding="16dp" />
+        app:layout_constraintStart_toEndOf="@+id/tilteB"
+        app:layout_constraintTop_toBottomOf="@id/aNumber" />
 
     <RadioGroup
         android:id="@+id/radioGroup"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/bNumber"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_width="414dp"
+        android:layout_height="233dp"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="1dp"
+        android:orientation="vertical"
+        android:padding="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/buttonCalculate"
         app:layout_constraintEnd_toEndOf="parent"
-        android:orientation="horizontal"
-        android:padding="16dp">
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/titleAns">
 
         <RadioButton
             android:id="@+id/radioAdd"
-            android:layout_width="wrap_content"
+            android:layout_width="92dp"
             android:layout_height="wrap_content"
-            android:text="+" />
+            android:text="Cộng" />
 
         <RadioButton
             android:id="@+id/radioSubtract"
-            android:layout_width="wrap_content"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:text="-" />
+            android:text="Trừ" />
 
         <RadioButton
             android:id="@+id/radioMultiply"
-            android:layout_width="wrap_content"
+            android:layout_width="108dp"
             android:layout_height="wrap_content"
-            android:text="*" />
+            android:text="Nhân" />
 
         <RadioButton
             android:id="@+id/radioDivide"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="/" />
+            android:text="Chia" />
     </RadioGroup>
 
     <Button
         android:id="@+id/buttonCalculate"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="292dp"
+        android:layout_height="54dp"
+        android:padding="16dp"
         android:text="Tính toán"
-        app:layout_constraintTop_toBottomOf="@id/radioGroup"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:padding="16dp" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/radioGroup" />
 
     <TextView
         android:id="@+id/textViewResult"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Kết quả"
+        android:padding="16dp"
+        android:text="Kết quả:"
         android:textSize="24sp"
-        app:layout_constraintTop_toBottomOf="@id/buttonCalculate"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:padding="16dp" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/buttonCalculate" />
+
+    <TextView
+        android:id="@+id/tilteB"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="6dp"
+        android:text="B="
+        android:textAlignment="center"
+        android:textSize="24sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/titleA" />
+
+    <TextView
+        android:id="@+id/titleAns"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="Chọn phép tính"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toTopOf="@+id/radioGroup"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/bNumber" />
 </androidx.constraintlayout.widget.ConstraintLayout>
