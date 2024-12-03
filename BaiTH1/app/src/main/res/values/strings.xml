@@ -1,0 +1,9 @@
+<resources>
+    <string name="calculator_64131937">BaiTH1</string>
+    <string-array name="operations">
+        <item>+</item>
+        <item>-</item>
+        <item>*</item>
+        <item>/</item>
+    </string-array>
+</resources>
