@@ -7,13 +7,126 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
+    <RadioGroup
+        android:layout_width="122dp"
+        android:layout_height="143dp"
+        android:layout_marginStart="64dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/heightNumber">
+
+        <TextView
+            android:id="@+id/titleCheck"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:text="Bạn là :"
+            android:textSize="16sp" />
+
+        <RadioButton
+            android:id="@+id/asianBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Người châu Á" />
+
+        <RadioButton
+            android:id="@+id/radioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Không phải người châu Á" />
+    </RadioGroup>
+
+    <EditText
+        android:id="@+id/weightNumber"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="136dp"
+        android:layout_marginTop="26dp"
+        android:ems="10"
+        android:inputType="numberDecimal"
+        android:minHeight="48dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/titleBMI" />
+
+    <EditText
+        android:id="@+id/heightNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="25dp"
+        android:layout_marginTop="10dp"
+        android:ems="10"
+        android:inputType="numberDecimal"
+        android:minHeight="48dp"
+        app:layout_constraintStart_toEndOf="@+id/heightTitle"
+        app:layout_constraintTop_toBottomOf="@+id/weightNumber" />
+
+    <TextView
+        android:id="@+id/titleBMI"
+        android:layout_width="108dp"
+        android:layout_height="46dp"
+        android:layout_marginStart="151dp"
+        android:layout_marginTop="36dp"
+        android:text="Tính BMI"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toTopOf="@+id/weightNumber"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.636" />
+
+    <TextView
+        android:id="@+id/weightTitle"
+        android:layout_width="100dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="108dp"
+        android:text="Nhập cân nặng:"
+        app:layout_constraintEnd_toStartOf="@+id/weightNumber"
+        app:layout_constraintHorizontal_bias="0.305"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/heightTitle"
+        android:layout_width="100dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="11dp"
+        android:layout_marginTop="15dp"
+        android:text="Nhập chiều cao:"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/weightTitle" />
+
+    <Button
+        android:id="@+id/calBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="161dp"
+        android:layout_marginTop="164dp"
+        android:layout_marginEnd="159dp"
+        android:text="Tính toán"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.555"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/heightNumber" />
+
+    <TextView
+        android:id="@+id/textViewResult"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:text="Kết quả:"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/calBtn" />
+
+    <TextView
+        android:id="@+id/textViewAdvice"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:text="Lời khuyên:"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewResult" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
