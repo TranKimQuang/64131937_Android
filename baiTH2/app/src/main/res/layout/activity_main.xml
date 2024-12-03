@@ -8,6 +8,7 @@
     tools:context=".MainActivity">
 
     <RadioGroup
+        android:id="@+id/radioCheck"
         android:layout_width="122dp"
         android:layout_height="143dp"
         android:layout_marginStart="64dp"
@@ -39,9 +40,10 @@
         android:id="@+id/weightNumber"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="136dp"
-        android:layout_marginTop="26dp"
+        android:layout_marginStart="160dp"
+        android:layout_marginTop="32dp"
         android:ems="10"
+        android:hint="Nhập cân nặng"
         android:inputType="numberDecimal"
         android:minHeight="48dp"
         app:layout_constraintStart_toStartOf="parent"
@@ -51,9 +53,10 @@
         android:id="@+id/heightNumber"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="25dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="12dp"
         android:ems="10"
+        android:hint="Nhập chiều cao"
         android:inputType="numberDecimal"
         android:minHeight="48dp"
         app:layout_constraintStart_toEndOf="@+id/heightTitle"
@@ -74,22 +77,24 @@
 
     <TextView
         android:id="@+id/weightTitle"
-        android:layout_width="100dp"
-        android:layout_height="40dp"
-        android:layout_marginTop="108dp"
+        android:layout_width="120dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="120dp"
         android:text="Nhập cân nặng:"
+        android:textSize="18dp"
         app:layout_constraintEnd_toStartOf="@+id/weightNumber"
-        app:layout_constraintHorizontal_bias="0.305"
+        app:layout_constraintHorizontal_bias="0.8"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/heightTitle"
-        android:layout_width="100dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="11dp"
-        android:layout_marginTop="15dp"
+        android:layout_width="120dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="4dp"
         android:text="Nhập chiều cao:"
+        android:textSize="18dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/weightTitle" />
 
