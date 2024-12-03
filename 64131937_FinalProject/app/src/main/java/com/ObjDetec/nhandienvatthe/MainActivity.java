@@ -1,7 +1,7 @@
 package com.ObjDetec.nhandienvatthe;
 
 import static androidx.camera.core.ImageCaptureExtKt.takePicture;
-
+import java.io.File;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -153,14 +153,14 @@ public class MainActivity extends AppCompatActivity {
         speechRecognizer.startListening(intent);
     }
     private void takePicture() {
-        File photoFile = new File(getExternalFilesDir(null), "photo.jpg");
+        File photoFile = createImageFile(); // Sử dụng phương thức tạo file
+
         ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions.Builder(photoFile).build();
 
         imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(this), new ImageCapture.OnImageSavedCallback() {
             @Override
             public void onImageSaved(@NonNull ImageCapture.OutputFileResults output) {
                 Log.d(TAG, "Photo saved to: " + photoFile.getAbsolutePath());
-                // Lưu ảnh vào cơ sở dữ liệu hoặc thực hiện các tác vụ khác
             }
 
             @Override
@@ -169,6 +169,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
 
 
 
@@ -231,6 +232,16 @@ public class MainActivity extends AppCompatActivity {
                 imageProxy.close(); // Đóng imageProxy ngay cả khi xảy ra lỗi
             }
         });
+    }
+
+
+    private File createImageFile() {
+        File storageDir = new File(getExternalFilesDir(null), "Images");
+        if (!storageDir.exists()) {
+            storageDir.mkdirs(); // Tạo thư mục nếu chưa tồn tại
+        }
+        String fileName = "photo_" + System.currentTimeMillis() + ".jpg";
+        return new File(storageDir, fileName);
     }
 
     private void updateNoDetection() {
