@@ -1,4 +1,4 @@
-package th.trankimquang.fragment;
+package th.trankimquang.fragment.English;
 
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
@@ -6,9 +6,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-public class BtnFragment extends Fragment {
+import th.trankimquang.fragment.R;
+
+public class TitleFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_btn, container, false);
+        return inflater.inflate(R.layout.fragment_titleeng, container, false);
     }
 }
+
