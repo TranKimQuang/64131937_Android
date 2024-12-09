@@ -1,0 +1,18 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/navigation_cn1"
+        android:icon="@drawable/img"
+        android:title="@string/title_home" />
+    <item
+        android:id="@+id/navigation_cn2"
+        android:icon="@drawable/img_1"
+        android:title="@string/title_search" />
+    <item
+        android:id="@+id/navigation_cn3"
+        android:icon="@drawable/img_2"
+        android:title="@string/title_profile" />
+    <item
+        android:id="@+id/navigation_cn4"
+        android:icon="@drawable/img_3"
+        android:title="@string/title_settings" />
+</menu>
