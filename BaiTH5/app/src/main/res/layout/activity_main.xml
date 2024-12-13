@@ -21,14 +21,13 @@
         app:shapeAppearanceOverlay="@style/CustomShapeAppearance" />
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="140dp"
+        android:layout_width="380dp"
+        android:layout_height="469dp"
+        android:layout_marginBottom="16dp"
         android:orientation="vertical"
         android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent">
 
         <androidx.cardview.widget.CardView
@@ -37,7 +36,8 @@
             android:layout_marginBottom="16dp"
             android:elevation="8dp"
             app:cardBackgroundColor="#FFFFFF"
-            app:cardCornerRadius="16dp"> <!-- Add corner radius here -->
+            app:cardCornerRadius="16dp"
+            app:cardElevation="20dp"> <!-- Add corner radius here -->
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -70,7 +70,8 @@
             android:layout_marginBottom="16dp"
             android:elevation="8dp"
             app:cardBackgroundColor="#FFFFFF"
-            app:cardCornerRadius="16dp"> <!-- Add corner radius here -->
+            app:cardCornerRadius="16dp"
+            app:cardElevation="10dp"> <!-- Add corner radius here -->
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -101,7 +102,8 @@
             android:layout_height="wrap_content"
             android:elevation="8dp"
             app:cardBackgroundColor="#FFFFFF"
-            app:cardCornerRadius="16dp">
+            app:cardCornerRadius="16dp"
+            app:cardElevation="10dp">
 
             <LinearLayout
                 android:layout_width="match_parent"

@@ -71,6 +71,7 @@
         android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:orientation="vertical"
         android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -197,6 +198,12 @@
                     app:layout_constraintTop_toTopOf="parent" />
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
+
+        <Button
+            android:id="@+id/nextbtn"
+            android:layout_width="173dp"
+            android:layout_height="wrap_content"
+            android:text="Next" />
 
     </LinearLayout>
 

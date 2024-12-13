@@ -13,7 +13,7 @@
         android:src="@drawable/backgroundpython"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.5"
-        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:shapeAppearanceOverlay="@style/CustomShapeAppearance" />
@@ -22,9 +22,11 @@
         android:id="@+id/imageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:srcCompat="@drawable/pythonlogo"
-        tools:layout_editor_absoluteX="48dp"
-        tools:layout_editor_absoluteY="51dp" />
+        android:layout_marginStart="44dp"
+        android:layout_marginTop="72dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/pythonlogo" />
 
     <LinearLayout
         android:layout_width="286dp"
@@ -79,6 +81,7 @@
         android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:orientation="vertical"
         android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -205,6 +208,13 @@
                     app:layout_constraintTop_toTopOf="parent" />
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
+
+        <Button
+            android:id="@+id/nextbtn"
+            android:layout_width="173dp"
+            android:layout_height="wrap_content"
+            android:text="Next" />
+
 
     </LinearLayout>
 
