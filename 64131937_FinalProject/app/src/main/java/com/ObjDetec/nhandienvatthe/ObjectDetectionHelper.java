@@ -35,8 +35,6 @@ public class ObjectDetectionHelper {
                         List<DetectedObject.Label> labels = detectedObject.getLabels();
                         MyDetectedObject myDetectedObject = new MyDetectedObject(boundingBox, confidence, labels);
                         myDetectedObjects.add(myDetectedObject);
-
-                        Log.d("DetectedObject", "Bounding Box: " + boundingBox + ", Confidence: " + confidence);
                     }
                     listener.onSuccess(myDetectedObjects);
                 })

@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private String lastLabel = ""; // Biến lưu trữ nhãn cuối cùng đã được đọc
     private SpeechRecognizer speechRecognizer;
     private Button speakButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
         setupCamera();
 
         objectDetectionHelper = new ObjectDetectionHelper();
-
+        chatbotHelper = new ChatbotHelper();
         // Khởi tạo TextToSpeech
         textToSpeech = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
