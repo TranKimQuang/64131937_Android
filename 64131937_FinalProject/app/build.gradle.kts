@@ -8,10 +8,18 @@ plugins {
 android {
     namespace = "com.ObjDetec.nhandienvatthe"
     compileSdk = 34
+        packagingOptions {
+            exclude("META-INF/INDEX.LIST")
+            exclude("META-INF/DEPENDENCIES")
+            exclude("META-INF/LICENSE")
+            exclude("META-INF/LICENSE.txt")
+            exclude("META-INF/NOTICE")
+            exclude("META-INF/NOTICE.txt")
+        }
 
     defaultConfig {
         applicationId = "com.ObjDetec.nhandienvatthe"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -39,6 +47,9 @@ android {
 
 dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.google.ar:core:1.24.0")
+    implementation("com.google.ar.sceneform:core:1.15.0")
+    implementation("com.google.ar.sceneform.ux:sceneform-ux:1.15.0")
     implementation("org.tensorflow:tensorflow-lite:2.8.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.3.1")
     implementation("com.google.cloud:google-cloud-dialogflow:0.115.0-alpha")

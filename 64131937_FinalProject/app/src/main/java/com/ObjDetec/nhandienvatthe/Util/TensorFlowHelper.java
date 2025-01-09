@@ -28,7 +28,7 @@ public class TensorFlowHelper {
     private MappedByteBuffer loadModelFile(Context context, String modelPath) throws IOException {
         // Mở file từ assets
         InputStream inputStream = context.getAssets().open(modelPath);
-        File tempFile = File.createTempFile("model", ".tflite", context.getCacheDir());
+        File tempFile = File.createTempFile("1", ".tflite", context.getCacheDir());
         FileOutputStream outputStream = new FileOutputStream(tempFile);
 
         // Sao chép dữ liệu từ InputStream vào FileOutputStream

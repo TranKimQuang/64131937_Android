@@ -5,43 +5,63 @@ import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
-import android.view.View;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ExperimentalGetImage;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
-
 import com.ObjDetec.nhandienvatthe.R;
 import com.ObjDetec.nhandienvatthe.Util.ChatbotHelper;
 import com.ObjDetec.nhandienvatthe.Util.ObjectDetectionHelper;
+import com.google.ar.sceneform.ux.ArFragment;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.tensorflow.lite.Interpreter;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.objects.ObjectDetector;
 
+import org.tensorflow.lite.Interpreter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
+    // AR components
+    private ArFragment arFragment;
 
-    private PreviewView previewView;
+    // Google ML Kit components
+    private ObjectDetector objectDetector;
     private TextView tvResult;
+    // UI components
+    private PreviewView previewView;
+
+
+    // CameraX components
     private ExecutorService cameraExecutor;
+    private ProcessCameraProvider cameraProvider;
+
+    // TensorFlow Lite components
+    private TensorFlowHelper tensorFlowHelper;
+
+    // TextToSpeech
     private TextToSpeech textToSpeech;
     private boolean isSpeaking = false;
-    private TensorFlowHelper tensorFlowHelper;
+
+    // Helpers
     private ObjectDetectionHelper objectDetectionHelper;
     private ChatbotHelper chatbotHelper;
 
@@ -50,22 +70,22 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Khởi tạo các thành phần UI
+        // Initialize UI
         previewView = findViewById(R.id.viewFinder);
         tvResult = findViewById(R.id.tvResult);
 
-        // Khởi tạo TensorFlowHelper để tải mô hình
-        tensorFlowHelper = new TensorFlowHelper(this);
+        // Initialize TensorFlowHelper with multiple models
+        String[] modelPaths = {"model1.tflite", "model2.tflite"}; // Add your model paths here
+        tensorFlowHelper = new TensorFlowHelper(this, modelPaths);
 
-        // Khởi tạo camera và các thành phần khác
+        // Initialize camera executor
         cameraExecutor = Executors.newSingleThreadExecutor();
-        setupCamera();
 
-        // Khởi tạo ObjectDetectionHelper và ChatbotHelper
+        // Initialize ObjectDetectionHelper and ChatbotHelper
         objectDetectionHelper = new ObjectDetectionHelper();
         chatbotHelper = new ChatbotHelper();
 
-        // Khởi tạo TextToSpeech
+        // Initialize TextToSpeech
         textToSpeech = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
                 textToSpeech.setLanguage(Locale.getDefault());
@@ -78,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onDone(String utteranceId) {
                         synchronized (MainActivity.this) {
-                            isSpeaking = false; // Cập nhật trạng thái khi đọc xong
+                            isSpeaking = false; // Update state when done speaking
                             Log.d(TAG, "TextToSpeech completed: " + utteranceId);
                         }
                     }
@@ -86,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onError(String utteranceId) {
                         synchronized (MainActivity.this) {
-                            isSpeaking = false; // Cập nhật trạng thái khi gặp lỗi
+                            isSpeaking = false; // Update state on error
                             Log.e(TAG, "TextToSpeech error: " + utteranceId);
                         }
                     }
@@ -96,32 +116,91 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Thực hiện suy luận với TensorFlow Lite
-        performInference();
+        // Start camera
+        startCamera();
     }
 
-    private void performInference() {
-        // Lấy Interpreter từ TensorFlowHelper
-        Interpreter interpreter = tensorFlowHelper.getInterpreter();
-        if (interpreter != null) {
-            // Tạo dữ liệu đầu vào giả lập (thay đổi kích thước phù hợp với mô hình)
-            float[][] input = new float[1][224]; // Ví dụ đầu vào
-            float[][] output = new float[1][1000]; // Ví dụ đầu ra
+    private void startCamera() {
+        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+        cameraProviderFuture.addListener(() -> {
+            try {
+                // Bind camera lifecycle to the lifecycle owner
+                cameraProvider = cameraProviderFuture.get();
+                bindCameraUseCases();
+            } catch (Exception e) {
+                Log.e(TAG, "Camera setup error: ", e);
+            }
+        }, ContextCompat.getMainExecutor(this));
+    }
 
-            // Thực hiện suy luận
-            interpreter.run(input, output);
+    private void bindCameraUseCases() {
+        // Set up the preview use case
+        Preview preview = new Preview.Builder().build();
+        preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
-            // Hiển thị kết quả
-            String result = "Kết quả: " + Arrays.toString(output[0]);
-            Log.d(TAG, result);
-            tvResult.setText(result);
+        // Set up the image analysis use case
+        ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build();
 
-            // Đọc kết quả bằng TextToSpeech
-            readTextAloud(result);
+        imageAnalysis.setAnalyzer(cameraExecutor, new ImageAnalysis.Analyzer() {
+            @OptIn(markerClass = ExperimentalGetImage.class)
+            @Override
+            public void analyze(@NonNull ImageProxy imageProxy) {
+                // Convert ImageProxy to InputImage
+                InputImage image = InputImage.fromMediaImage(imageProxy.getImage(), imageProxy.getImageInfo().getRotationDegrees());
+
+                // Run inference using multiple models
+                runInference(image);
+
+                // Close the ImageProxy
+                imageProxy.close();
+            }
+        });
+
+        // Bind use cases to the camera
+        CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+        cameraProvider.unbindAll();
+        cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalysis);
+    }
+
+    private void runInference(InputImage image) {
+        // Preprocess the image (convert to float array, resize, etc.)
+        float[][] input = preprocessImage(image);
+
+        // Run inference using model 1
+        Interpreter interpreter1 = tensorFlowHelper.getInterpreter("model1.tflite");
+        if (interpreter1 != null) {
+            float[][] output1 = new float[1][1000]; // Adjust output size based on your model
+            interpreter1.run(input, output1);
+            String result1 = "Model 1 Output: " + Arrays.toString(output1[0]);
+            Log.d(TAG, result1);
+            tvResult.setText(result1);
+            readTextAloud(result1);
         } else {
-            Log.e(TAG, "Interpreter is null. Model loading failed.");
-            tvResult.setText("Lỗi khi tải mô hình.");
+            Log.e(TAG, "Model 1 Interpreter is null. Model loading failed.");
         }
+
+        // Run inference using model 2
+        Interpreter interpreter2 = tensorFlowHelper.getInterpreter("model2.tflite");
+        if (interpreter2 != null) {
+            float[][] output2 = new float[1][1000]; // Adjust output size based on your model
+            interpreter2.run(input, output2);
+            String result2 = "Model 2 Output: " + Arrays.toString(output2[0]);
+            Log.d(TAG, result2);
+            tvResult.append("\n" + result2);
+            readTextAloud(result2);
+        } else {
+            Log.e(TAG, "Model 2 Interpreter is null. Model loading failed.");
+        }
+    }
+
+    private float[][] preprocessImage(InputImage image) {
+        // Implement your image preprocessing logic here
+        // For example, resize the image to 224x224 and convert it to a float array
+        float[][] input = new float[1][224 * 224 * 3]; // Adjust input size based on your model
+        // Add your preprocessing code here
+        return input;
     }
 
     private void readTextAloud(String text) {
@@ -134,68 +213,45 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void setupCamera() {
-        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
-        cameraProviderFuture.addListener(() -> {
-            try {
-                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                bindCamera(cameraProvider);
-            } catch (Exception e) {
-                Log.e(TAG, "Camera setup error: ", e);
-            }
-        }, ContextCompat.getMainExecutor(this));
-    }
-
-    private void bindCamera(ProcessCameraProvider cameraProvider) {
-        Preview preview = new Preview.Builder().build();
-        preview.setSurfaceProvider(previewView.getSurfaceProvider());
-
-        ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build();
-
-        imageAnalysis.setAnalyzer(cameraExecutor, new ImageAnalysis.Analyzer() {
-            @Override
-            public void analyze(@NonNull ImageProxy imageProxy) {
-                // Xử lý hình ảnh từ camera (nếu cần)
-                imageProxy.close();
-            }
-        });
-
-        cameraProvider.bindToLifecycle(
-                this,
-                CameraSelector.DEFAULT_BACK_CAMERA,
-                preview,
-                imageAnalysis
-        );
-    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        // Shutdown camera executor
+        if (cameraExecutor != null) {
+            cameraExecutor.shutdown();
+        }
+
+        // Close TensorFlow Lite interpreters
+        if (tensorFlowHelper != null) {
+            tensorFlowHelper.close();
+        }
+
+        // Shutdown TextToSpeech
         if (textToSpeech != null) {
             textToSpeech.stop();
             textToSpeech.shutdown();
         }
-        cameraExecutor.shutdown();
     }
 
-    // Lớp TensorFlowHelper để tải và quản lý mô hình TensorFlow Lite
+    // Helper class to manage TensorFlow Lite models
     private static class TensorFlowHelper {
-        private Interpreter interpreter;
 
-        public TensorFlowHelper(Context context) {
-            try {
-                // Tải mô hình từ assets
-                MappedByteBuffer modelBuffer = loadModelFile(context, "model.tflite");
-                interpreter = new Interpreter(modelBuffer);
-            } catch (IOException e) {
-                e.printStackTrace();
+        private final Map<String, Interpreter> interpreters = new HashMap<>();
+
+        public TensorFlowHelper(Context context, String[] modelPaths) {
+            for (String modelPath : modelPaths) {
+                try {
+                    MappedByteBuffer modelBuffer = loadModelFile(context, modelPath);
+                    Interpreter interpreter = new Interpreter(modelBuffer);
+                    interpreters.put(modelPath, interpreter);
+                    Log.d(TAG, "Model loaded successfully: " + modelPath);
+                } catch (IOException e) {
+                    Log.e(TAG, "Failed to load model: " + modelPath, e);
+                }
             }
         }
 
         private MappedByteBuffer loadModelFile(Context context, String modelPath) throws IOException {
-            // Mở file từ assets
             FileInputStream fileInputStream = new FileInputStream(context.getAssets().openFd(modelPath).getFileDescriptor());
             FileChannel fileChannel = fileInputStream.getChannel();
             long startOffset = context.getAssets().openFd(modelPath).getStartOffset();
@@ -203,8 +259,18 @@ public class MainActivity extends AppCompatActivity {
             return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
         }
 
-        public Interpreter getInterpreter() {
-            return interpreter;
+        public Interpreter getInterpreter(String modelPath) {
+            return interpreters.get(modelPath);
         }
+
+        public void close() {
+            for (Interpreter interpreter : interpreters.values()) {
+                if (interpreter != null) {
+                    interpreter.close();
+                }
+            }
+            Log.d(TAG, "All interpreters closed");
+        }
+
     }
 }
