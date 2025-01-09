@@ -39,6 +39,8 @@ android {
 
 dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("org.tensorflow:tensorflow-lite:2.8.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.3.1")
     implementation("com.google.cloud:google-cloud-dialogflow:0.115.0-alpha")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.google.mlkit:object-detection:17.0.2")
