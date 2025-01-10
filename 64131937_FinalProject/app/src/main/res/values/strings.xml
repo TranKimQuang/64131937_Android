@@ -1,4 +1,16 @@
 <resources>
     <string name="app_name">NhanDienVatThe</string>
     <string name="detected_object_label">%1$s (%2$d%%)</string>
+    <string-array name="languages">
+        <item>Tiếng Việt</item>
+        <item>Tiếng Anh</item>
+        <item>Tiếng Pháp</item>
+        <item>Tiếng Nga</item>
+    </string-array>
+    <string-array name="language_codes">
+        <item>vi</item>
+        <item>en</item>
+        <item>fr</item>
+        <item>ru</item>
+    </string-array>
 </resources>

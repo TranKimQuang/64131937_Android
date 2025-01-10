@@ -2,7 +2,12 @@ package com.ObjDetec.nhandienvatthe.Activity;
 
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
 import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
@@ -30,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private ObjectDetectionManager objectDetectionManager;
     private TextToSpeechManager textToSpeechManager;
     private BoundingBoxView boundingBoxView;
+    private MyDetectedObject currentObject = null; // Lưu trữ vật thể hiện tại
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,9 +53,58 @@ public class MainActivity extends AppCompatActivity {
         objectDetectionManager = new ObjectDetectionManager();
         textToSpeechManager = new TextToSpeechManager(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
+                Log.d(TAG, "TextToSpeech is ready");
                 textToSpeechManager.setLanguage(Locale.getDefault());
+
+                // Thiết lập UtteranceProgressListener để theo dõi khi nào hoàn thành việc đọc
+                textToSpeechManager.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                    @Override
+                    public void onStart(String utteranceId) {
+                        Log.d(TAG, "Started reading: " + utteranceId);
+                    }
+
+                    @Override
+                    public void onDone(String utteranceId) {
+                        Log.d(TAG, "Finished reading: " + utteranceId);
+                        // Cho phép đọc label tiếp theo
+                        textToSpeechManager.setSpeaking(false);
+                    }
+
+                    @Override
+                    public void onError(String utteranceId) {
+                        Log.e(TAG, "Error reading: " + utteranceId);
+                        // Cho phép đọc label tiếp theo
+                        textToSpeechManager.setSpeaking(false);
+                    }
+                });
             } else {
                 Log.e(TAG, "TextToSpeech initialization failed");
+            }
+        });
+
+        // Thiết lập Spinner để chọn ngôn ngữ
+        Spinner languageSpinner = findViewById(R.id.languageSpinner);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                this,
+                R.array.languages,
+                android.R.layout.simple_spinner_item
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        languageSpinner.setAdapter(adapter);
+
+        // Xử lý sự kiện khi người dùng chọn ngôn ngữ
+        languageSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String[] languageCodes = getResources().getStringArray(R.array.language_codes);
+                String selectedLanguage = languageCodes[position];
+                LabelTranslator.setLanguage(selectedLanguage); // Cập nhật ngôn ngữ trong LabelTranslator
+                textToSpeechManager.setLanguage(new Locale(selectedLanguage)); // Cập nhật ngôn ngữ trong TextToSpeech
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Không làm gì
             }
         });
 
@@ -95,14 +150,19 @@ public class MainActivity extends AppCompatActivity {
             String label = object.getLabels().isEmpty() ? "Unknown" : object.getLabels().get(0).getText();
             String translatedLabel = LabelTranslator.translateLabel(label);
             int confidence = object.getConfidence();
-            resultText.append(getString(R.string.detected_object_label, translatedLabel, confidence)).append("\n");
+            resultText.append(translatedLabel).append(" (").append(confidence).append("%)\n");
 
-            // Đọc label ngay khi xác định được vật thể
-            if (!textToSpeechManager.isSpeaking()) {
-                textToSpeechManager.speak(translatedLabel);
+            // Chỉ đọc label nếu vật thể mới khác với vật thể hiện tại
+            if (currentObject == null || !object.equals(currentObject)) {
+                Log.d(TAG, "New object detected: " + translatedLabel);
+                currentObject = object; // Cập nhật vật thể hiện tại
+                textToSpeechManager.speak(translatedLabel, TextToSpeech.QUEUE_FLUSH, null, "tts1");
             }
         }
-        ((TextView) findViewById(R.id.tvResult)).setText(resultText.toString());
+
+        // Hiển thị kết quả trên TextView
+        TextView tvResult = findViewById(R.id.tvResult);
+        tvResult.setText(resultText.toString());
     }
 
     @Override

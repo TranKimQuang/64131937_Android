@@ -1,7 +1,9 @@
 package com.ObjDetec.nhandienvatthe.Manager;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
 import java.util.Locale;
 
@@ -19,11 +21,11 @@ public class TextToSpeechManager {
         textToSpeech.setLanguage(locale);
     }
 
-    public void speak(String text) {
+    public void speak(String text, int queueMode, Bundle params, String utteranceId) {
         if (text != null && !isSpeaking) {
             Log.d(TAG, "Reading text aloud: " + text);
             isSpeaking = true;
-            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts1");
+            textToSpeech.speak(text, queueMode, params, utteranceId);
         } else {
             Log.d(TAG, "Text or TextToSpeech is null or already speaking.");
         }
@@ -46,4 +48,13 @@ public class TextToSpeechManager {
     public boolean isSpeaking() {
         return isSpeaking;
     }
+
+    public void setSpeaking(boolean speaking) {
+        isSpeaking = speaking;
+    }
+
+    public void setOnUtteranceProgressListener(UtteranceProgressListener listener) {
+        textToSpeech.setOnUtteranceProgressListener(listener);
+    }
+
 }
