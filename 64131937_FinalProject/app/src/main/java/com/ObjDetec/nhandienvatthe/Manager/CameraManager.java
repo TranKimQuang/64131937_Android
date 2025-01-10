@@ -21,11 +21,14 @@ public class CameraManager {
     private PreviewView previewView;
     private ExecutorService cameraExecutor;
     private ImageCapture imageCapture;
+    private LifecycleOwner lifecycleOwner; // Thêm LifecycleOwner
 
-    public CameraManager(Context context, PreviewView previewView, ExecutorService cameraExecutor) {
+    // Cập nhật constructor để nhận LifecycleOwner
+    public CameraManager(Context context, PreviewView previewView, ExecutorService cameraExecutor, LifecycleOwner lifecycleOwner) {
         this.context = context;
         this.previewView = previewView;
         this.cameraExecutor = cameraExecutor;
+        this.lifecycleOwner = lifecycleOwner; // Khởi tạo LifecycleOwner
     }
 
     public void setupCamera() {
@@ -41,17 +44,21 @@ public class CameraManager {
     }
 
     private void bindCamera(ProcessCameraProvider cameraProvider) {
+        // Khởi tạo Preview
         Preview preview = new Preview.Builder().build();
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
+        // Khởi tạo ImageCapture
         imageCapture = new ImageCapture.Builder().build();
 
+        // Khởi tạo ImageAnalysis
         ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
 
+        // Gắn các use case vào lifecycle
         cameraProvider.bindToLifecycle(
-                (LifecycleOwner) context,
+                lifecycleOwner, // Sử dụng LifecycleOwner được truyền vào
                 CameraSelector.DEFAULT_BACK_CAMERA,
                 preview,
                 imageCapture,

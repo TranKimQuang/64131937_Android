@@ -8,14 +8,6 @@ plugins {
 android {
     namespace = "com.ObjDetec.nhandienvatthe"
     compileSdk = 34
-        packagingOptions {
-            exclude("META-INF/INDEX.LIST")
-            exclude("META-INF/DEPENDENCIES")
-            exclude("META-INF/LICENSE")
-            exclude("META-INF/LICENSE.txt")
-            exclude("META-INF/NOTICE")
-            exclude("META-INF/NOTICE.txt")
-        }
 
     defaultConfig {
         applicationId = "com.ObjDetec.nhandienvatthe"
@@ -23,7 +15,6 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -42,6 +33,15 @@ android {
     }
     viewBinding {
         enable = true
+    }
+
+    packagingOptions {
+        exclude("META-INF/INDEX.LIST")
+        exclude("META-INF/DEPENDENCIES")
+        exclude("META-INF/LICENSE")
+        exclude("META-INF/LICENSE.txt")
+        exclude("META-INF/NOTICE")
+        exclude("META-INF/NOTICE.txt")
     }
 }
 
@@ -98,3 +98,4 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
+

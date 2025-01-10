@@ -12,13 +12,17 @@ public class TextToSpeechManager {
     private TextToSpeech textToSpeech;
     private boolean isSpeaking = false;
 
-    // Thêm Context vào constructor
     public TextToSpeechManager(Context context, TextToSpeech.OnInitListener listener) {
         textToSpeech = new TextToSpeech(context, listener);
     }
 
     public void setLanguage(Locale locale) {
-        textToSpeech.setLanguage(locale);
+        int result = textToSpeech.setLanguage(locale);
+        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+            Log.e(TAG, "Language is not supported: " + locale);
+        } else {
+            Log.d(TAG, "Language set to: " + locale);
+        }
     }
 
     public void speak(String text) {
@@ -28,6 +32,13 @@ public class TextToSpeechManager {
             textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts1");
         } else {
             Log.d(TAG, "Text or TextToSpeech is null or already speaking.");
+        }
+    }
+
+    public void stop() {
+        if (textToSpeech != null && isSpeaking) {
+            textToSpeech.stop();
+            isSpeaking = false;
         }
     }
 

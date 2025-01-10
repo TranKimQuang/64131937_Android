@@ -1,5 +1,8 @@
 package com.ObjDetec.nhandienvatthe.Manager;
 
+import androidx.annotation.OptIn;
+import androidx.camera.core.ExperimentalGetImage;
+import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 
 import com.ObjDetec.nhandienvatthe.Util.ObjectDetectionHelper;
@@ -30,6 +33,14 @@ public class ObjectDetectionManager {
                 imageProxy.close();
             }
         });
+    }
+
+    @OptIn(markerClass = ExperimentalGetImage.class)
+    public ImageAnalysis.Analyzer getImageAnalyzer(ObjectDetectionListener listener) {
+        return imageProxy -> {
+            InputImage image = InputImage.fromMediaImage(imageProxy.getImage(), imageProxy.getImageInfo().getRotationDegrees());
+            detectObjects(image, imageProxy, listener);
+        };
     }
 
     public interface ObjectDetectionListener {
