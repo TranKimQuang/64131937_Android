@@ -2,7 +2,6 @@ package com.ObjDetec.nhandienvatthe.Manager;
 
 import android.content.Context;
 import android.speech.tts.TextToSpeech;
-import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
 import java.util.Locale;
 
@@ -17,12 +16,7 @@ public class TextToSpeechManager {
     }
 
     public void setLanguage(Locale locale) {
-        int result = textToSpeech.setLanguage(locale);
-        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-            Log.e(TAG, "Language is not supported: " + locale);
-        } else {
-            Log.d(TAG, "Language set to: " + locale);
-        }
+        textToSpeech.setLanguage(locale);
     }
 
     public void speak(String text) {
@@ -49,7 +43,7 @@ public class TextToSpeechManager {
         }
     }
 
-    public void setOnUtteranceProgressListener(UtteranceProgressListener listener) {
-        textToSpeech.setOnUtteranceProgressListener(listener);
+    public boolean isSpeaking() {
+        return isSpeaking;
     }
 }
