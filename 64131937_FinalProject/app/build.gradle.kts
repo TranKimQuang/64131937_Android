@@ -63,6 +63,7 @@ dependencies {
     // ML Kit
     implementation("com.google.mlkit:object-detection:17.0.2")
     implementation("com.google.mlkit:vision-common:17.3.0")
+    implementation("com.google.mlkit:barcode-scanning:17.2.0")
 
     // Firebase (sử dụng BoM)
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))

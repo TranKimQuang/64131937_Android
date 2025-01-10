@@ -1,5 +1,9 @@
 package com.ObjDetec.nhandienvatthe.Activity;
+import com.ObjDetec.nhandienvatthe.Manager.QRCodeScannerManager;
+import com.google.mlkit.vision.barcode.common.Barcode;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
@@ -23,6 +27,10 @@ import com.ObjDetec.nhandienvatthe.Util.LabelTranslator;
 import com.ObjDetec.nhandienvatthe.ViewModel.MainViewModel;
 import com.ObjDetec.nhandienvatthe.View.BoundingBoxView;
 import com.google.mlkit.vision.common.InputImage;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executors;
@@ -36,12 +44,13 @@ public class MainActivity extends AppCompatActivity {
     private TextToSpeechManager textToSpeechManager;
     private BoundingBoxView boundingBoxView;
     private MyDetectedObject currentObject = null; // Lưu trữ vật thể hiện tại
+    private QRCodeScannerManager qrCodeScannerManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        qrCodeScannerManager = new QRCodeScannerManager();
         // Khởi tạo BoundingBoxView
         boundingBoxView = findViewById(R.id.boundingBoxView);
 
@@ -114,7 +123,6 @@ public class MainActivity extends AppCompatActivity {
         // Quan sát LiveData để cập nhật UI
         viewModel.getDetectedObjects().observe(this, this::updateUI);
     }
-
     @OptIn(markerClass = ExperimentalGetImage.class)
     private void setupCameraAndDetection() {
         cameraManager.setupCamera(imageProxy -> {
@@ -122,25 +130,30 @@ public class MainActivity extends AppCompatActivity {
             int imageWidth = image.getWidth();
             int imageHeight = image.getHeight();
 
-            objectDetectionManager.detectObjects(image, imageProxy, new ObjectDetectionManager.ObjectDetectionListener() {
-                @Override
-                public void onSuccess(List<MyDetectedObject> myDetectedObjects) {
-                    viewModel.setDetectedObjects(myDetectedObjects);
+            if (isQRCodeMode) {
+                // Chỉ quét QR code khi chế độ QR code được bật
+                scanQRCode(image);
+            } else {
+                // Chỉ nhận diện vật thể khi chế độ QR code tắt
+                objectDetectionManager.detectObjects(image, imageProxy, new ObjectDetectionManager.ObjectDetectionListener() {
+                    @Override
+                    public void onSuccess(List<MyDetectedObject> myDetectedObjects) {
+                        viewModel.setDetectedObjects(myDetectedObjects);
 
-                    // Truyền kích thước hình ảnh và danh sách vật thể vào BoundingBoxView
-                    if (boundingBoxView != null) {
-                        boundingBoxView.setImageDimensions(imageWidth, imageHeight);
-                        boundingBoxView.setDetectedObjects(myDetectedObjects);
-                    } else {
-                        Log.e(TAG, "BoundingBoxView is null");
+                        if (boundingBoxView != null) {
+                            boundingBoxView.setImageDimensions(imageWidth, imageHeight);
+                            boundingBoxView.setDetectedObjects(myDetectedObjects);
+                        } else {
+                            Log.e(TAG, "BoundingBoxView is null");
+                        }
                     }
-                }
 
-                @Override
-                public void onFailure(Exception e) {
-                    Log.e(TAG, "Object detection failed: ", e);
-                }
-            });
+                    @Override
+                    public void onFailure(Exception e) {
+                        Log.e(TAG, "Object detection failed: ", e);
+                    }
+                });
+            }
         });
     }
 
@@ -164,7 +177,66 @@ public class MainActivity extends AppCompatActivity {
         TextView tvResult = findViewById(R.id.tvResult);
         tvResult.setText(resultText.toString());
     }
+    private boolean isQRCodeMode = false;
 
+    // Thêm một phương thức để chuyển đổi giữa chế độ nhận diện vật thể và quét QR code
+    public void toggleQRCodeMode(View view) {
+        isQRCodeMode = !isQRCodeMode;
+        TextView tvResult = findViewById(R.id.tvResult);
+        if (isQRCodeMode) {
+            tvResult.setText("QR Code Mode: On");
+            // Xóa kết quả nhận diện vật thể nếu có
+            viewModel.setDetectedObjects(new ArrayList<>());
+            boundingBoxView.setDetectedObjects(new ArrayList<>());
+            boundingBoxView.invalidate(); // Xóa bounding box trên màn hình
+        } else {
+            tvResult.setText("QR Code Mode: Off");
+        }
+    }
+    private void scanQRCode(InputImage image) {
+        qrCodeScannerManager.scanQRCode(image, new QRCodeScannerManager.QRCodeScanListener() {
+            @Override
+            public void onQRCodeScanned(String qrCodeValue) {
+                Log.d(TAG, "QR Code Scanned: " + qrCodeValue);
+                runOnUiThread(() -> {
+                    TextView tvResult = findViewById(R.id.tvResult);
+                    tvResult.setText("QR Code: " + qrCodeValue);
+                    textToSpeechManager.speak("QR Code detected: " + qrCodeValue, TextToSpeech.QUEUE_FLUSH, null, "tts1");
+
+                    // Kiểm tra xem QR code có phải là một link hợp lệ không
+                    if (isValidUrl(qrCodeValue)) {
+                        // Mở link trong trình duyệt
+                        openUrlInBrowser(qrCodeValue);
+                    }
+                });
+            }
+
+            @Override
+            public void onQRCodeScanFailed(String errorMessage) {
+                Log.e(TAG, "QR Code Scan Failed: " + errorMessage);
+                runOnUiThread(() -> {
+                    TextView tvResult = findViewById(R.id.tvResult);
+                    tvResult.setText("QR Code Scan Failed: " + errorMessage);
+                });
+            }
+        });
+    }
+
+    // Phương thức kiểm tra xem chuỗi có phải là một URL hợp lệ không
+    private boolean isValidUrl(String url) {
+        try {
+            new URL(url);
+            return true;
+        } catch (MalformedURLException e) {
+            return false;
+        }
+    }
+
+    // Phương thức mở URL trong trình duyệt
+    private void openUrlInBrowser(String url) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        startActivity(intent);
+    }
     @Override
     protected void onDestroy() {
         super.onDestroy();
