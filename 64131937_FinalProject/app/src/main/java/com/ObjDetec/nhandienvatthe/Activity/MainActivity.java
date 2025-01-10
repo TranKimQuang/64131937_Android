@@ -1,6 +1,4 @@
 package com.ObjDetec.nhandienvatthe.Activity;
-import com.ObjDetec.nhandienvatthe.Manager.QRCodeScannerManager;
-import com.google.mlkit.vision.barcode.common.Barcode;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -12,14 +10,18 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
+
 import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.ExperimentalGetImage;
 import androidx.camera.core.ImageProxy;
 import androidx.lifecycle.ViewModelProvider;
+
 import com.ObjDetec.nhandienvatthe.Manager.CameraManager;
 import com.ObjDetec.nhandienvatthe.Manager.ObjectDetectionManager;
+import com.ObjDetec.nhandienvatthe.Manager.QRCodeScannerManager;
 import com.ObjDetec.nhandienvatthe.Manager.TextToSpeechManager;
 import com.ObjDetec.nhandienvatthe.Model.MyDetectedObject;
 import com.ObjDetec.nhandienvatthe.R;
@@ -45,21 +47,45 @@ public class MainActivity extends AppCompatActivity {
     private BoundingBoxView boundingBoxView;
     private MyDetectedObject currentObject = null; // Lưu trữ vật thể hiện tại
     private QRCodeScannerManager qrCodeScannerManager;
+    private Switch switchQRCodeMode;
+    private boolean isQRCodeMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         qrCodeScannerManager = new QRCodeScannerManager();
+
         // Khởi tạo BoundingBoxView
         boundingBoxView = findViewById(R.id.boundingBoxView);
+
+        // Khởi tạo Switch
+        switchQRCodeMode = findViewById(R.id.switchQRCodeMode);
+        switchQRCodeMode.setChecked(false); // Mặc định là OFF
+
+        // Thiết lập sự kiện khi Switch thay đổi trạng thái
+        switchQRCodeMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            isQRCodeMode = isChecked;
+            if (isQRCodeMode) {
+                Log.d(TAG, "QR Code Mode: ON");
+                // Xóa kết quả nhận diện vật thể nếu có
+                viewModel.setDetectedObjects(new ArrayList<>());
+                boundingBoxView.setDetectedObjects(new ArrayList<>());
+                boundingBoxView.invalidate(); // Xóa bounding box trên màn hình
+            } else {
+                Log.d(TAG, "QR Code Mode: OFF");
+            }
+
+            // Thiết lập lại camera và chế độ nhận diện
+            setupCameraAndDetection();
+        });
 
         // Khởi tạo ViewModel
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
         // Khởi tạo các manager
-        cameraManager = new CameraManager(this, findViewById(R.id.viewFinder), Executors.newSingleThreadExecutor(), this);
-        objectDetectionManager = new ObjectDetectionManager();
+        cameraManager = new CameraManager(this, findViewById(R.id.viewFinder), Executors.newSingleThreadExecutor(), this);        objectDetectionManager = new ObjectDetectionManager();
         textToSpeechManager = new TextToSpeechManager(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
                 Log.d(TAG, "TextToSpeech is ready");
@@ -123,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
         // Quan sát LiveData để cập nhật UI
         viewModel.getDetectedObjects().observe(this, this::updateUI);
     }
+
     @OptIn(markerClass = ExperimentalGetImage.class)
     private void setupCameraAndDetection() {
         cameraManager.setupCamera(imageProxy -> {
@@ -177,22 +204,7 @@ public class MainActivity extends AppCompatActivity {
         TextView tvResult = findViewById(R.id.tvResult);
         tvResult.setText(resultText.toString());
     }
-    private boolean isQRCodeMode = false;
 
-    // Thêm một phương thức để chuyển đổi giữa chế độ nhận diện vật thể và quét QR code
-    public void toggleQRCodeMode(View view) {
-        isQRCodeMode = !isQRCodeMode;
-        TextView tvResult = findViewById(R.id.tvResult);
-        if (isQRCodeMode) {
-            tvResult.setText("QR Code Mode: On");
-            // Xóa kết quả nhận diện vật thể nếu có
-            viewModel.setDetectedObjects(new ArrayList<>());
-            boundingBoxView.setDetectedObjects(new ArrayList<>());
-            boundingBoxView.invalidate(); // Xóa bounding box trên màn hình
-        } else {
-            tvResult.setText("QR Code Mode: Off");
-        }
-    }
     private void scanQRCode(InputImage image) {
         qrCodeScannerManager.scanQRCode(image, new QRCodeScannerManager.QRCodeScanListener() {
             @Override
@@ -213,11 +225,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onQRCodeScanFailed(String errorMessage) {
-                Log.e(TAG, "QR Code Scan Failed: " + errorMessage);
-                runOnUiThread(() -> {
-                    TextView tvResult = findViewById(R.id.tvResult);
-                    tvResult.setText("QR Code Scan Failed: " + errorMessage);
-                });
+                // Không hiển thị gì nếu không quét được QR code
+                Log.d(TAG, "No QR Code detected");
             }
         });
     }
@@ -237,6 +246,7 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         startActivity(intent);
     }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();

@@ -16,7 +16,9 @@
         app:layout_constraintBottom_toTopOf="@+id/cardView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent" >
+
+    </androidx.camera.view.PreviewView>
 
     <com.ObjDetec.nhandienvatthe.View.BoundingBoxView
         android:id="@+id/boundingBoxView"
@@ -70,13 +72,17 @@
         app:layout_constraintTop_toBottomOf="@+id/cardView"
         app:layout_constraintVertical_bias="1.0" />
 
-    <Button
-        android:id="@+id/btnToggleQRCodeMode"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="toggleQRCodeMode"
-        android:text="Toggle QR Code Mode"
+    <Switch
+        android:id="@+id/switchQRCodeMode"
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="5dp"
+        android:checked="false"
+        android:text="QR Code Mode"
         app:layout_constraintBottom_toTopOf="@+id/languageSpinner"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cardView" />
+        app:layout_constraintTop_toBottomOf="@+id/cardView"
+        app:layout_constraintVertical_bias="0.415" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

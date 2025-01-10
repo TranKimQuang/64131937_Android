@@ -14,7 +14,14 @@ public class TextToSpeechManager {
     private boolean isSpeaking = false;
 
     public TextToSpeechManager(Context context, TextToSpeech.OnInitListener listener) {
-        textToSpeech = new TextToSpeech(context, listener);
+        textToSpeech = new TextToSpeech(context, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                Log.d(TAG, "TextToSpeech initialized successfully");
+                listener.onInit(status);
+            } else {
+                Log.e(TAG, "TextToSpeech initialization failed");
+            }
+        });
     }
 
     public void setLanguage(Locale locale) {
@@ -56,5 +63,4 @@ public class TextToSpeechManager {
     public void setOnUtteranceProgressListener(UtteranceProgressListener listener) {
         textToSpeech.setOnUtteranceProgressListener(listener);
     }
-
 }
