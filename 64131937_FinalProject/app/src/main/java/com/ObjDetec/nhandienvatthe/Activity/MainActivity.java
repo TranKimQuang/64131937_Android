@@ -7,21 +7,23 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.ExperimentalGetImage;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.ObjDetec.nhandienvatthe.Manager.CameraManager;
 import com.ObjDetec.nhandienvatthe.Manager.ObjectDetectionManager;
-import com.ObjDetec.nhandienvatthe.Manager.QRCodeScannerManager;
 import com.ObjDetec.nhandienvatthe.Manager.TextToSpeechManager;
 import com.ObjDetec.nhandienvatthe.Model.MyDetectedObject;
 import com.ObjDetec.nhandienvatthe.R;
@@ -30,8 +32,7 @@ import com.ObjDetec.nhandienvatthe.ViewModel.MainViewModel;
 import com.ObjDetec.nhandienvatthe.View.BoundingBoxView;
 import com.google.mlkit.vision.common.InputImage;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -45,9 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private ObjectDetectionManager objectDetectionManager;
     private TextToSpeechManager textToSpeechManager;
     private BoundingBoxView boundingBoxView;
-    private MyDetectedObject currentObject = null; // Lưu trữ vật thể hiện tại
-    private QRCodeScannerManager qrCodeScannerManager;
-    private Switch switchQRCodeMode;
+    private MyDetectedObject currentObject = null;
     private boolean isQRCodeMode = false;
 
     @Override
@@ -55,92 +54,69 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        qrCodeScannerManager = new QRCodeScannerManager();
-
-        // Khởi tạo BoundingBoxView
+        // Khởi tạo các thành phần
         boundingBoxView = findViewById(R.id.boundingBoxView);
-
-        // Khởi tạo Switch
-        switchQRCodeMode = findViewById(R.id.switchQRCodeMode);
-        switchQRCodeMode.setChecked(false); // Mặc định là OFF
-
-        // Thiết lập sự kiện khi Switch thay đổi trạng thái
-        switchQRCodeMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            isQRCodeMode = isChecked;
-            if (isQRCodeMode) {
-                Log.d(TAG, "QR Code Mode: ON");
-                // Xóa kết quả nhận diện vật thể nếu có
-                viewModel.setDetectedObjects(new ArrayList<>());
-                boundingBoxView.setDetectedObjects(new ArrayList<>());
-                boundingBoxView.invalidate(); // Xóa bounding box trên màn hình
-            } else {
-                Log.d(TAG, "QR Code Mode: OFF");
-            }
-
-            // Thiết lập lại camera và chế độ nhận diện
-            setupCameraAndDetection();
-        });
+        Switch switchQRCodeMode = findViewById(R.id.switchQRCodeMode);
+        Button takeObjButton = findViewById(R.id.takeObj);
+        Button libraryButton = findViewById(R.id.library);
 
         // Khởi tạo ViewModel
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
-        // Khởi tạo các manager
-        cameraManager = new CameraManager(this, findViewById(R.id.viewFinder), Executors.newSingleThreadExecutor(), this);        objectDetectionManager = new ObjectDetectionManager();
+        // Khởi tạo CameraManager
+        cameraManager = new CameraManager(this, findViewById(R.id.viewFinder), Executors.newSingleThreadExecutor(), this);
+
+        // Khởi tạo ObjectDetectionManager
+        objectDetectionManager = new ObjectDetectionManager();
+
+        // Khởi tạo TextToSpeechManager
         textToSpeechManager = new TextToSpeechManager(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
                 Log.d(TAG, "TextToSpeech is ready");
                 textToSpeechManager.setLanguage(Locale.getDefault());
-
-                // Thiết lập UtteranceProgressListener để theo dõi khi nào hoàn thành việc đọc
-                textToSpeechManager.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-                    @Override
-                    public void onStart(String utteranceId) {
-                        Log.d(TAG, "Started reading: " + utteranceId);
-                    }
-
-                    @Override
-                    public void onDone(String utteranceId) {
-                        Log.d(TAG, "Finished reading: " + utteranceId);
-                        // Cho phép đọc label tiếp theo
-                        textToSpeechManager.setSpeaking(false);
-                    }
-
-                    @Override
-                    public void onError(String utteranceId) {
-                        Log.e(TAG, "Error reading: " + utteranceId);
-                        // Cho phép đọc label tiếp theo
-                        textToSpeechManager.setSpeaking(false);
-                    }
-                });
             } else {
                 Log.e(TAG, "TextToSpeech initialization failed");
             }
         });
 
-        // Thiết lập Spinner để chọn ngôn ngữ
-        Spinner languageSpinner = findViewById(R.id.languageSpinner);
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-                this,
-                R.array.languages,
-                android.R.layout.simple_spinner_item
-        );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        languageSpinner.setAdapter(adapter);
-
-        // Xử lý sự kiện khi người dùng chọn ngôn ngữ
-        languageSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String[] languageCodes = getResources().getStringArray(R.array.language_codes);
-                String selectedLanguage = languageCodes[position];
-                LabelTranslator.setLanguage(selectedLanguage); // Cập nhật ngôn ngữ trong LabelTranslator
-                textToSpeechManager.setLanguage(new Locale(selectedLanguage)); // Cập nhật ngôn ngữ trong TextToSpeech
+        // Thiết lập sự kiện cho Switch
+        switchQRCodeMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            isQRCodeMode = isChecked;
+            if (isQRCodeMode) {
+                Log.d(TAG, "QR Code Mode: ON");
+            } else {
+                Log.d(TAG, "QR Code Mode: OFF");
             }
+        });
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // Không làm gì
-            }
+        // Thiết lập sự kiện cho nút Chụp
+        takeObjButton.setOnClickListener(v -> {
+            File libraryFolder = createLibraryFolder();
+            String fileName = "IMG_" + System.currentTimeMillis() + ".jpg";
+            File photoFile = new File(libraryFolder, fileName);
+
+            cameraManager.takePicture(photoFile, new ImageCapture.OnImageSavedCallback() {
+                @Override
+                public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(MainActivity.this, "Ảnh đã được lưu: " + photoFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onError(@NonNull ImageCaptureException exception) {
+                    Log.e(TAG, "Lỗi khi chụp ảnh: ", exception);
+                    runOnUiThread(() -> {
+                        Toast.makeText(MainActivity.this, "Lỗi khi chụp ảnh", Toast.LENGTH_SHORT).show();
+                    });
+                }
+            });
+        });
+
+        // Thiết lập sự kiện cho nút Thư viện
+        libraryButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, LibraryActivity.class);
+            startActivity(intent);
         });
 
         // Thiết lập camera và nhận diện vật thể
@@ -148,6 +124,14 @@ public class MainActivity extends AppCompatActivity {
 
         // Quan sát LiveData để cập nhật UI
         viewModel.getDetectedObjects().observe(this, this::updateUI);
+    }
+
+    private File createLibraryFolder() {
+        File libraryFolder = new File(getExternalFilesDir(null), "library");
+        if (!libraryFolder.exists()) {
+            libraryFolder.mkdirs();
+        }
+        return libraryFolder;
     }
 
     @OptIn(markerClass = ExperimentalGetImage.class)
@@ -206,51 +190,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void scanQRCode(InputImage image) {
-        qrCodeScannerManager.scanQRCode(image, new QRCodeScannerManager.QRCodeScanListener() {
-            @Override
-            public void onQRCodeScanned(String qrCodeValue) {
-                Log.d(TAG, "QR Code Scanned: " + qrCodeValue);
-                runOnUiThread(() -> {
-                    TextView tvResult = findViewById(R.id.tvResult);
-                    tvResult.setText("QR Code: " + qrCodeValue);
-                    textToSpeechManager.speak("QR Code detected: " + qrCodeValue, TextToSpeech.QUEUE_FLUSH, null, "tts1");
-
-                    // Kiểm tra xem QR code có phải là một link hợp lệ không
-                    if (isValidUrl(qrCodeValue)) {
-                        // Mở link trong trình duyệt
-                        openUrlInBrowser(qrCodeValue);
-                    }
-                });
-            }
-
-            @Override
-            public void onQRCodeScanFailed(String errorMessage) {
-                // Không hiển thị gì nếu không quét được QR code
-                Log.d(TAG, "No QR Code detected");
-            }
-        });
-    }
-
-    // Phương thức kiểm tra xem chuỗi có phải là một URL hợp lệ không
-    private boolean isValidUrl(String url) {
-        try {
-            new URL(url);
-            return true;
-        } catch (MalformedURLException e) {
-            return false;
-        }
-    }
-
-    // Phương thức mở URL trong trình duyệt
-    private void openUrlInBrowser(String url) {
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-        startActivity(intent);
+        // Logic quét QR code
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Dừng và giải phóng tài nguyên
         cameraManager.shutdown();
         textToSpeechManager.shutdown();
     }
