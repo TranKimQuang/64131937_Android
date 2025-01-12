@@ -90,9 +90,9 @@
         android:layout_height="51dp"
         android:text="Chụp"
         app:layout_constraintBottom_toTopOf="@+id/library"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/cardView"
-        app:layout_constraintVertical_bias="0.437"
-        tools:layout_editor_absoluteX="235dp" />
+        app:layout_constraintVertical_bias="0.437" />
 
     <Button
         android:id="@+id/library"
@@ -100,9 +100,9 @@
         android:layout_height="51dp"
         android:text="Thư viện"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/cardView"
-        app:layout_constraintVertical_bias="0.902"
-        tools:layout_editor_absoluteX="236dp" />
+        app:layout_constraintVertical_bias="0.902" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

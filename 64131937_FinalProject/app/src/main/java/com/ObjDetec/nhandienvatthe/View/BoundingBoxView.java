@@ -54,6 +54,8 @@ public class BoundingBoxView extends View {
                 Rect adjustedBoundingBox = adjustBoundingBox(boundingBox, viewWidth, viewHeight, imageWidth, imageHeight);
                 canvas.drawRect(adjustedBoundingBox, paint);
             }
+        } else {
+            // Nếu không có vật thể nào, không vẽ gì cả
         }
     }
 

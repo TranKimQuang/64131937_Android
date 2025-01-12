@@ -7,8 +7,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.ObjDetec.nhandienvatthe.R;
@@ -38,8 +41,14 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
         Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath());
         holder.imageView.setImageBitmap(bitmap);
 
-        // Thêm mô tả trợ năng
-        holder.imageView.setContentDescription("Hình ảnh " + (position + 1));
+        // Hiển thị tên hình ảnh
+        holder.tvImageName.setText(imageFile.getName());
+
+        // Thêm hiệu ứng khi nhấn
+        holder.cardView.setOnClickListener(v -> {
+            // Xử lý khi nhấn vào hình ảnh (ví dụ: mở hình ảnh lớn)
+            Toast.makeText(context, "Bạn đã nhấn vào: " + imageFile.getName(), Toast.LENGTH_SHORT).show();
+        });
     }
 
     @Override
@@ -49,10 +58,14 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
 
     public static class ImageViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
+        TextView tvImageName;
+        CardView cardView;
 
         public ImageViewHolder(@NonNull View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.imageView);
+            tvImageName = itemView.findViewById(R.id.tvImageName);
+            cardView = itemView.findViewById(R.id.cardView);
         }
     }
 }

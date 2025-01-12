@@ -24,8 +24,9 @@
         android:theme="@style/Theme.NhanDienVatThe"
         android:hardwareAccelerated="true"
         tools:targetApi="31">
-
+        <activity android:name=".Activity.LibraryActivity" />
         <activity
+
             android:name=".Activity.MainActivity"
             android:exported="true">
             <intent-filter>

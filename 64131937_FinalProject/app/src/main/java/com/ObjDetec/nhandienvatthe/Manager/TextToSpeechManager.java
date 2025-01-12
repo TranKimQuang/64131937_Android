@@ -18,6 +18,26 @@ public class TextToSpeechManager {
             if (status == TextToSpeech.SUCCESS) {
                 Log.d(TAG, "TextToSpeech initialized successfully");
                 listener.onInit(status);
+
+                // Thêm UtteranceProgressListener để theo dõi trạng thái phát âm thanh
+                textToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                    @Override
+                    public void onStart(String utteranceId) {
+                        Log.d(TAG, "Speech started: " + utteranceId);
+                    }
+
+                    @Override
+                    public void onDone(String utteranceId) {
+                        Log.d(TAG, "Speech finished: " + utteranceId);
+                        isSpeaking = false; // Đặt lại trạng thái khi phát âm thanh kết thúc
+                    }
+
+                    @Override
+                    public void onError(String utteranceId) {
+                        Log.e(TAG, "Speech error: " + utteranceId);
+                        isSpeaking = false; // Đặt lại trạng thái nếu có lỗi
+                    }
+                });
             } else {
                 Log.e(TAG, "TextToSpeech initialization failed");
             }
