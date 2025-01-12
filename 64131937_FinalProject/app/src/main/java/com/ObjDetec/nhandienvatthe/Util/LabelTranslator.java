@@ -20,6 +20,7 @@ public class LabelTranslator {
         Map<String, String> viSystemMessages = new HashMap<>();
         viSystemMessages.put("No QR Code detected, continuing to scan...", "Không tìm thấy QR Code, tiếp tục quét...");
         viSystemMessages.put("QR Code detected", "Đã phát hiện QR Code");
+        viSystemMessages.put("Detecting objects...", "Đang nhận diện vật thể..."); // Thêm thông báo này
         SYSTEM_MESSAGES.put("vi", viSystemMessages);
 
         // Tiếng Anh
@@ -32,6 +33,7 @@ public class LabelTranslator {
         Map<String, String> enSystemMessages = new HashMap<>();
         enSystemMessages.put("No QR Code detected, continuing to scan...", "No QR Code detected, continuing to scan...");
         enSystemMessages.put("QR Code detected", "QR Code detected");
+        enSystemMessages.put("Detecting objects...", "Detecting objects..."); // Thêm thông báo này
         SYSTEM_MESSAGES.put("en", enSystemMessages);
 
         // Tiếng Pháp
@@ -44,6 +46,7 @@ public class LabelTranslator {
         Map<String, String> frSystemMessages = new HashMap<>();
         frSystemMessages.put("No QR Code detected, continuing to scan...", "Aucun QR Code détecté, continuation du scan...");
         frSystemMessages.put("QR Code detected", "QR Code détecté");
+        frSystemMessages.put("Detecting objects...", "Détection d'objets en cours..."); // Thêm thông báo này
         SYSTEM_MESSAGES.put("fr", frSystemMessages);
 
         // Tiếng Nga
@@ -56,6 +59,7 @@ public class LabelTranslator {
         Map<String, String> ruSystemMessages = new HashMap<>();
         ruSystemMessages.put("No QR Code detected, continuing to scan...", "QR-код не обнаружен, продолжаю сканирование...");
         ruSystemMessages.put("QR Code detected", "QR-код обнаружен");
+        ruSystemMessages.put("Detecting objects...", "Обнаружение объектов..."); // Thêm thông báo này
         SYSTEM_MESSAGES.put("ru", ruSystemMessages);
     }
 

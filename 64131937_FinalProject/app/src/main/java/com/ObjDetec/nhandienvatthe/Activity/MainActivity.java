@@ -56,7 +56,8 @@ public class MainActivity extends AppCompatActivity {
     private MyDetectedObject currentObject = null;
     private boolean isQRCodeMode = false;
     private long lastQRProcessedTime = 0; // Thời gian lần cuối xử lý hình ảnh
-    private static final long QR_PROCESS_INTERVAL = 5000;
+    private static final long QR_PROCESS_INTERVAL = 3000;
+    private boolean isDetecting = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -177,9 +178,15 @@ public class MainActivity extends AppCompatActivity {
         return libraryFolder;
     }
 
+
     @OptIn(markerClass = ExperimentalGetImage.class)
     private void setupCameraAndDetection() {
         cameraManager.setupCamera(imageProxy -> {
+            if (imageProxy.getImage() == null) {
+                imageProxy.close(); // Đóng imageProxy nếu hình ảnh không hợp lệ
+                return;
+            }
+
             InputImage image = InputImage.fromMediaImage(imageProxy.getImage(), imageProxy.getImageInfo().getRotationDegrees());
             int imageWidth = image.getWidth();
             int imageHeight = image.getHeight();
@@ -193,8 +200,10 @@ public class MainActivity extends AppCompatActivity {
                 lastQRProcessedTime = currentTime; // Cập nhật thời gian xử lý QR code cuối cùng
 
                 // Chỉ quét QR code khi chế độ QR code được bật
-                scanQRCode(image);
+                scanQRCode(image, imageProxy); // Truyền imageProxy vào scanQRCode
             } else {
+
+
                 // Chỉ nhận diện vật thể khi chế độ QR code tắt
                 objectDetectionManager.detectObjects(image, imageProxy, new ObjectDetectionManager.ObjectDetectionListener() {
                     @Override
@@ -207,11 +216,19 @@ public class MainActivity extends AppCompatActivity {
                         } else {
                             Log.e(TAG, "BoundingBoxView is null");
                         }
+
+                        // Đóng imageProxy sau khi xử lý xong
+                        imageProxy.close();
+                        isDetecting = false; // Đánh dấu đã hoàn thành nhận diện
                     }
 
                     @Override
                     public void onFailure(Exception e) {
                         Log.e(TAG, "Object detection failed: ", e);
+
+                        // Đóng imageProxy ngay cả khi xử lý thất bại
+                        imageProxy.close();
+                        isDetecting = false; // Đánh dấu đã hoàn thành nhận diện
                     }
                 });
             }
@@ -243,7 +260,7 @@ public class MainActivity extends AppCompatActivity {
         tvResult.setText(resultText.toString());
     }
 
-    private void scanQRCode(InputImage image) {
+    private void scanQRCode(InputImage image, ImageProxy imageProxy) {
         qrCodeScannerManager.scanQRCode(image, new QRCodeScannerManager.QRCodeScanListener() {
             @Override
             public void onQRCodeScanned(String qrCodeValue, Rect boundingBox) {
@@ -267,6 +284,9 @@ public class MainActivity extends AppCompatActivity {
                         showOpenLinkDialog(qrCodeValue);
                     }
                 });
+
+                // Đóng imageProxy sau khi quét QR code xong
+                imageProxy.close();
             }
 
             @Override
@@ -276,6 +296,9 @@ public class MainActivity extends AppCompatActivity {
                     TextView tvResult = findViewById(R.id.tvResult);
                     tvResult.setText(LabelTranslator.translateSystemMessage("No QR Code detected, continuing to scan..."));
                 });
+
+                // Đóng imageProxy ngay cả khi quét QR code thất bại
+                imageProxy.close();
             }
         });
     }
@@ -292,6 +315,8 @@ public class MainActivity extends AppCompatActivity {
                 .setNegativeButton("Không", (dialog, which) -> {
                     // Không làm gì, đóng hộp thoại
                     dialog.dismiss();
+                    boundingBoxView.setDetectedObjects(new ArrayList<>());
+                    boundingBoxView.invalidate();
                 })
                 .setIcon(android.R.drawable.ic_dialog_info)
                 .show();
